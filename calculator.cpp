@@ -33,7 +33,7 @@ const char number = '8';
 const char name = 'a';
 const char squarert = 's';
 const char power = 'P';
-const char constant    = 'C';
+const char constant = 'C';
 
 Token Token_stream::get()
 {
@@ -106,7 +106,7 @@ struct Variable {
 	string name;
 	double value;
 	bool constant;
-	Variable(string n, double v, bool c) :name(n), value(v), constant(c) { }
+	Variable(string n, double v, bool c = true) :name(n), value(v), constant(c) { }
 };
 
 vector<Variable> names;
@@ -121,8 +121,8 @@ double get_value(string s)
 void set_value(string s, double d)
 {
 	for (int i = 0; i <= names.size(); ++i)
-		if (names[i].name == s && names[i].constant == true) error(s, " is a constant");
-		else if (names[i].name == s && names[i].constant == false) {
+		if (names[i].name == s && names[i].constant == false) error(s, " is a constant");
+		else if (names[i].name == s && names[i].constant == true) {
 			names[i].value = d;
 			return;
 		}
@@ -139,6 +139,13 @@ bool is_declared(string s)
 }
 
 Token_stream ts;
+
+double define_name(string s, double val, bool var=true)
+{
+    if (is_declared(s)) error(s," declared twice");
+    names.push_back(Variable(s,val,var));
+    return val;
+}
 
 double expression();
 
@@ -180,7 +187,18 @@ double primary()
 		return pow(x, i);
 	}
 	case name:
-		return get_value(t.name);
+		{
+			Token next = ts.get();
+			if (next.kind == '=') {	// handle name = expression
+				double d = expression();
+				set_value(t.name,d);
+				return d;
+			}
+			else {
+				ts.unget(next);		// not an assignment: return the value
+				return get_value(t.name); // return the variable's value
+			}
+		}
 	default:
 		error("primary expected");
 	}
@@ -206,7 +224,7 @@ double term()
     		double d = primary();
     		if (d == 0) error("%: divide by zero");
     		left = fmod(left, d);
-    	break;
+    		break;
    		}
 		default:
 			ts.unget(t);
@@ -218,8 +236,8 @@ double term()
 double expression()
 {
 	double left = term();
+	Token t = ts.get();
 	while (true) {
-		Token t = ts.get();
 		switch (t.kind) {
 		case '+':
 			left += term();
@@ -234,57 +252,18 @@ double expression()
 	}
 }
 
-double declaration()
+double declaration(Token k)
 {
-	bool isCon = false;
 	Token t = ts.get();
-	if (t.kind == 'C') isCon = true;
-	
-	if (t.kind != 'a') error("name expected in declaration");
-	string name = t.name;
-	if (is_declared(name))
-	{
-		cout << name + ", declared twice. Reassign? y/n > ";
-  		cin.clear();
-  		cin.ignore(10000, '\n');
-  		string ans;
-  		getline(cin, ans);
-  		if (ans == "n") error(name, ", will not be reassigned; ");
-  		if (ans == "y")
-  			{
-   				cout << "New value of "+ name + " = ";
-   				int val;
-   				cin >> val;
-   				set_value(name, val);
-   				double d = val;
-   				return d;
-			}
-	}
-	Token t2 = ts.get();
-	if (t2.kind != '=') error("= missing in declaration of ", name);
-	
-	double d = expression();
-	names.push_back(Variable(name, d, isCon));
-	return d;
-}
-
-double assignment()
-{
- Token t = ts.get();
+    if (t.kind != name) error ("name expected in declaration");
     string var_name = t.name;
-    if (!is_declared(var_name)) error(var_name, " has not been declared");
 
-    ts.get();
+    Token t2 = ts.get();
+    if (t2.kind != '=') error("= missing in declaration of ", var_name);
+
     double d = expression();
-    set_value(var_name, d);
+    define_name(var_name ,d, k.kind == let);
     return d;
-}
-
-double define_name(string s, double val, bool var=true)
-{
-    if (is_declared(s)) error(s," declared twice");
-    names.push_back(Variable(s,val,var));
-    return val;
 }
 
 double statement()
@@ -293,7 +272,7 @@ double statement()
 	switch (t.kind) {
 	case let:
 	case constant: 
-		return declaration();
+		return declaration(t.kind);
 	default:
 		ts.unget(t);
 		return expression();
@@ -327,9 +306,9 @@ void calculate()
 int main()
 
 try {
-	define_name("pi", 3.14159265359, true);
-	define_name("k", 1000, true);
-	define_name("e", 2.71828182846, true);
+	define_name("pi", 3.14159265359, false);
+	define_name("k", 1000, false);
+	define_name("e", 2.71828182846, false);
 
 	calculate();
 	return 0;
