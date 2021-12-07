@@ -20,28 +20,36 @@ You can use char or underscores _ in your variable name.
 = 7
 ```
 
-If you want to change the value of your variable, set the variable again to a different value. 
-The calculator will prompt you if you want to change the value of the variable (y/n).
-If yes, the calculator will allow you to change the value of the variable. 
+Set a variable as a constant with const. The value of a constant cannot be changed after being set. The constants of k, pi, and e are already set.
+
+```bash
+> pi;
+= 3.14159
+> k;
+= 1000
+> e;
+= 2.71828
+> const x = 5;
+= 5
+```
+
+If you want to change the value of your variable, set the variable again to a different value with the "=" operation. (Ex: x = 3)
+The calculator will prompt you if are trying to change a constant as you cannot change the value of a constant. 
 
 ```bash
 > let x = 5;
 = 5
-> # y = 2;
+> const y = 2;
 = 2
 > x + y;
 = 7
-> let x = 3;
-= x, declared twice. Reassign? y/n > y
-New value of x = 3;
-3
+> x = 3;
+= 3
+> y = 3;
+y is a constant. 
 > x + y;
 = 5
 ```
-
-
-
-
 
 To end the calculator, enter "quit" or "exit" to end the program.
 ```bash
